@@ -7,16 +7,13 @@
 - **Entidad Principal**: Plataforma Administrativa del Cementerio Central
 
 ## 📁 Estructura del Proyecto
-Basado en la organización de archivos actual:
+```text
 week 1/
-│
 ├── starter/
 │   └── script.js          # Lógica dinámica y manipulación del DOM
-│
 ├── pictures/              # Capturas de pantalla para documentación
 │   ├── light-theme.png
 │   └── dark-theme.png
-│
 ├── index.html             # Estructura principal y maquetación
 ├── styles.css             # Estilos, variables y temas (claro/oscuro)
 └── README.md              # Documentación y guía del sistema
