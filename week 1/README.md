@@ -8,12 +8,18 @@
 
 ## 📁 Estructura del Proyecto
 Basado en la organización de archivos actual:
-- `pictures/`: Carpeta para capturas de pantalla y recursos visuales.
-- `starter/`: Contiene la lógica del sistema.
-    - `script.js`: Implementación de funciones ES2023.
-- `index.html`: Estructura principal del sitio.
-- `styles.css`: Definición de estilos y variables de tema.
-- `README.md`: Documentación del proyecto.
+week 1/
+│
+├── starter/
+│   └── script.js          # Lógica dinámica y manipulación del DOM
+│
+├── pictures/              # Capturas de pantalla para documentación
+│   ├── light-theme.png
+│   └── dark-theme.png
+│
+├── index.html             # Estructura principal y maquetación
+├── styles.css             # Estilos, variables y temas (claro/oscuro)
+└── README.md              # Documentación y guía del sistema
 
 ## 🎯 Descripción
 Esta aplicación web interactiva permite la administración integral de un camposanto. El sistema facilita la visualización y gestión de parcelas, registros de sepultura y mantenimiento preventivo. Incluye una interfaz solemne y profesional con soporte para temas dinámicos (claro/oscuro), permitiendo a los administradores alternar la visualización mediante `localStorage` para persistencia.
