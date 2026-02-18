@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronos - Gestión de Necrópolis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #f0ebe3;
+      --bg-secondary: #faf7f2;
+      --bg-card: #fffdf9;
+      --text-primary: #1c1610;
+      --text-secondary: #5a4e42;
+      --accent: #5c3d2e;
+      --border: #d4c9b8;
+      --border-ornament: #b8a898;
+      --gold: #c9a84c;
+      --shadow: rgba(30,20,10,0.15);
+      --danger: #8b1a1a;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0e0c0a;
+      --bg-secondary: #1a1511;
+      --bg-card: #201a13;
+      --text-primary: #e8dfd0;
+      --text-secondary: #a89880;
+      --accent: #9b7355;
+      --border: #3a3028;
+      --border-ornament: #4a3e30;
+      --shadow: rgba(0,0,0,0.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Crimson Text', serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 8px 32px var(--shadow); }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .list-column { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    .list-column { border-right: 1px solid var(--border); min-height: 500px; }
+    .sidebar-column { background: var(--bg-secondary); }
+    .card-section { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    .card-section:last-child { border-bottom: none; }
+
+    .card-header { padding: 2rem; text-align: center; background: #1c1610; color: #e8c97a; }
+    [data-theme="dark"] .card-header { background: #060402; }
+    .card-header h1 { font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 0.3em; margin: 0.5rem 0 0.25rem; }
+    .header-crest { font-size: 2.5rem; }
+    .system-title { font-size: 0.82rem; opacity: 0.7; letter-spacing: 0.2em; text-transform: uppercase; }
+
+    h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border-bottom: 1px solid var(--border-ornament);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .section-header h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+
+    /* ─── Items ─── */
+    .records-container { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .task-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-ornament);
+      border-left: 4px solid var(--border-ornament);
+      padding: 1rem 1rem 1rem 1.1rem;
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      gap: 0.75rem;
+      align-items: start;
+      box-shadow: 3px 3px 0 var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .task-item:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gold); }
+    .task-item.completed { opacity: 0.55; }
+    .task-item.completed .task-name { text-decoration: line-through; color: var(--text-secondary); }
+    .priority-high   { border-left-color: #c0392b; }
+    .priority-medium { border-left-color: var(--gold); }
+    .priority-low    { border-left-color: #27ae60; }
+
+    .chk { margin-top: 0.4rem; cursor: pointer; accent-color: var(--gold); width: 15px; height: 15px; flex-shrink: 0; }
+
+    .task-content { min-width: 0; overflow: hidden; }
+
+    .task-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-primary);
+    }
+
+    .task-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .task-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .task-date {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .task-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.45rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .btn-icon:hover { border-color: var(--gold); background: rgba(201,168,76,0.15); }
+    .btn-icon.danger:hover { border-color: #c0392b; background: rgba(192,57,43,0.1); }
+
+    /* ─── Empty ─── */
+    .empty-msg { display: none; text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-style: italic; border: 1px dashed var(--border); }
+
+    /* ─── Form ─── */
+    .input-group { margin-bottom: 0.75rem; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 0.7rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: 'Crimson Text', serif;
+      font-size: 1rem;
+      border-radius: 0;
+      transition: border-color 0.3s;
+    }
+
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); outline: none; }
+    textarea { resize: vertical; }
+
+    /* ─── Botones ─── */
+    .btn {
+      background: var(--accent);
+      color: #f5e6c8;
+      border: 1px solid var(--gold);
+      padding: 0.7rem 1.25rem;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn:hover { background: var(--gold); color: var(--accent); }
+    .btn-secondary { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+    .btn-small { padding: 0.35rem 0.75rem; font-size: 0.72rem; }
+    .form-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.75rem; }
+
+    /* ─── Stats ─── */
+    .stats-grid { display: flex; gap: 1rem; justify-content: center; margin-bottom: 0.75rem; }
+    .stat-item { border: 1px solid var(--border); padding: 0.5rem 1rem; text-align: center; flex: 1; background: var(--bg-card); }
+    .stat-value { font-family: 'Cinzel', serif; font-size: 1.6rem; display: block; color: var(--gold); }
+    .stat-label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+    .stats-footer { font-size: 0.82rem; color: var(--text-secondary); text-align: center; display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+
+    /* ─── Filtros ─── */
+    .search-field { margin-bottom: 0.75rem; }
+    .filter-stack { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    /* ─── Toast ─── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--accent); color: var(--gold);
+      padding: 0.9rem 1.5rem; border: 1px solid var(--gold);
+      font-family: 'Cinzel', serif; font-size: 0.8rem;
+      transform: translateY(120px);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 1000; box-shadow: 4px 4px 0 var(--shadow);
+    }
+    .toast.show { transform: translateY(0); }
+
+    /* ─── Tema ─── */
+    .theme-toggle {
+      position: fixed; top: 1rem; right: 1rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 0.5rem 0.7rem; cursor: pointer; font-size: 1.1rem;
+      z-index: 100; box-shadow: 2px 2px 0 var(--shadow); transition: all 0.3s;
+    }
+    .theme-toggle:hover { border-color: var(--gold); }
+
+    /* ─── Footer ─── */
+    .footer { text-align: center; padding: 1.5rem; color: var(--text-secondary); font-size: 0.78rem; letter-spacing: 0.2em; }
+    .footer-divider { margin-bottom: 0.5rem; color: var(--gold); letter-spacing: 0.5em; }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" id="theme-toggle">🌙</button>
+
+  <div class="container">
+    <main class="card">
+      <header class="card-header">
+        <div class="header-crest">⚖️</div>
+        <h1>MANTENIMIENTO DE REGISTROS</h1>
+        <p class="system-title">Archivo Central de la Necrópolis</p>
+      </header>
+
+      <div class="main-layout">
+
+        <!-- LISTA -->
+        <section class="card-section list-column">
+          <div class="section-header">
+            <h2>📜 Libro de Registros</h2>
+            <button id="btn-clear" class="btn btn-small btn-secondary">Limpiar Archivados</button>
+          </div>
+          <div id="empty-state" class="empty-msg">
+            <p>No se han encontrado registros en este sector.</p>
+          </div>
+          <div id="item-list" class="records-container"></div>
+        </section>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar-column">
+
+          <section class="card-section">
+            <h2 id="form-title">➕ Nueva Inscripción</h2>
+            <div class="input-group">
+              <input type="text" id="item-name" placeholder="Nombre del residente...">
+            </div>
+            <div class="input-group">
+              <textarea id="item-description" placeholder="Epitafio..." rows="2"></textarea>
+            </div>
+            <div class="input-row">
+              <select id="item-category">
+                <option value="mausoleum">Mausoleo</option>
+                <option value="crypt">Cripta</option>
+                <option value="garden">Jardín</option>
+                <option value="ossuary">Osario</option>
+              </select>
+              <select id="item-priority">
+                <option value="high">Urgente</option>
+                <option value="medium" selected>Regular</option>
+                <option value="low">Baja</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button id="btn-cancel" class="btn btn-secondary" style="display:none">Cancelar</button>
+              <button id="btn-submit" class="btn">Inscribir</button>
+            </div>
+          </section>
+
+          <section class="card-section">
+            <h2>📊 Estadísticas</h2>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-value" id="stat-total">0</span>
+                <span class="stat-label">Total</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="stat-active">0</span>
+                <span class="stat-label">Activos</span>
+              </div>
+            </div>
+            <div id="stats-details" class="stats-footer"></div>
+          </section>
+
+          <section class="card-section">
+            <h2>🔍 Filtros</h2>
+            <input type="text" id="search-input" placeholder="Buscar..." class="search-field">
+            <div class="filter-stack">
+              <select id="filter-status">
+                <option value="all">Todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Archivados</option>
+              </select>
+              <select id="filter-category">
+                <option value="all">Todos los sectores</option>
+                <option value="mausoleum">Mausoleos</option>
+                <option value="crypt">Criptas</option>
+                <option value="garden">Jardines</option>
+                <option value="ossuary">Osarios</option>
+              </select>
+            </div>
+          </section>
+
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-divider">◈ ◈ ◈</div>
+      <p>SISTEMA DE GESTIÓN DE CEMENTERIOS v2.0</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ─── Estado ───────────────────────────────────────────────────────────────
+    let items = [];
+    let editingId = null;
+
+    // ─── Categorías (shorthand properties) ───────────────────────────────────
+    const buildCategory = (name, emoji) => ({ name, emoji });
+
+    const CATEGORIES = {
+      mausoleum: buildCategory('Mausoleo', '🛕'),
+      crypt:     buildCategory('Cripta',   '🗝️'),
+      garden:    buildCategory('Jardín',   '🌿'),
+      ossuary:   buildCategory('Osario',   '💀'),
+    };
+
+    const PRIORITY_LABELS = {
+      high:   '🔴 Urgente',
+      medium: '🟡 Regular',
+      low:    '🟢 Baja',
+    };
+
+    // ─── Fábrica de items (default parameters) ────────────────────────────────
+    const createItem = ({
+      name        = 'Sin nombre',
+      description = '',
+      category    = 'mausoleum',
+      priority    = 'medium',
+      active      = true,
+      id          = Date.now(),
+      createdAt   = new Date().toLocaleDateString('es-ES'),
+    } = {}) => ({ id, name, description, category, priority, active, createdAt });
+
+    // ─── Stats con reduce ─────────────────────────────────────────────────────
+    const getStats = (arr) =>
+      arr.reduce((acc, item) => {
+        acc.total++;
+        if (item.active) acc.active++;
+        // computed property name
+        const key = `cat_${item.category}`;
+        acc[key] = Object.hasOwn(acc, key) ? acc[key] + 1 : 1; // ES2022
+        return acc;
+      }, { total: 0, active: 0 });
+
+    // ─── Filtros encadenados ──────────────────────────────────────────────────
+    const applyFilters = (arr, { search = '', status = 'all', category = 'all' } = {}) =>
+      arr.filter(item => {
+        const q = search.toLowerCase();
+        const matchSearch   = item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
+        const matchStatus   = status === 'all' || (status === 'active' && item.active) || (status === 'inactive' && !item.active);
+        const matchCategory = category === 'all' || item.category === category;
+        return matchSearch && matchStatus && matchCategory;
+      });
+
+    // ─── Render de un item con map ────────────────────────────────────────────
+    const renderItem = ({ id, name, description, category, active, priority, createdAt }) => {
+      const cat = CATEGORIES[category];
+      return `
+        <div class="task-item ${active ? '' : 'completed'} priority-${priority}" data-id="${id}">
+          <input type="checkbox" class="chk" ${active ? '' : 'checked'}>
+          <div class="task-content">
+            <h3 class="task-name">${name}</h3>
+            <p class="task-desc">${description || '<em>Sin epitafio...</em>'}</p>
+            <div class="task-meta">
+              <span class="task-badge">${cat.emoji} ${cat.name}</span>
+              <span class="task-badge">${PRIORITY_LABELS[priority]}</span>
+              <span class="task-date">📅 ${createdAt}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="btn-icon edit-btn" data-id="${id}">✏️</button>
+            <button class="btn-icon danger del-btn" data-id="${id}">🗑️</button>
+          </div>
+        </div>`;
+    };
+
+    // ─── Render principal ─────────────────────────────────────────────────────
+    const render = () => {
+      const search   = document.getElementById('search-input').value;
+      const status   = document.getElementById('filter-status').value;
+      const category = document.getElementById('filter-category').value;
+
+      // filter + map + join encadenados
+      const filtered = applyFilters(items, { search, status, category });
+      const html     = filtered.map(renderItem).join('');
+
+      document.getElementById('item-list').innerHTML   = html;
+      document.getElementById('empty-state').style.display = filtered.length === 0 ? 'block' : 'none';
+
+      // Stats
+      const stats   = getStats(items);
+      document.getElementById('stat-total').textContent  = stats.total;
+      document.getElementById('stat-active').textContent = stats.active;
+
+      // Object.entries + map + filter + join
+      const details = Object.entries(CATEGORIES)
+        .map(([key, { name, emoji }]) => {
+          const count = stats[`cat_${key}`] ?? 0;
+          return count > 0 ? `<span>${emoji} ${name}: <strong>${count}</strong></span>` : '';
+        })
+        .filter(Boolean)
+        .join(' · ');
+
+      document.getElementById('stats-details').innerHTML = details || '<em>Sin registros</em>';
+    };
+
+    // ─── Agregar o editar item ────────────────────────────────────────────────
+    const submitItem = () => {
+      const name = document.getElementById('item-name').value.trim();
+      if (!name) {
+        showToast('El nombre es obligatorio ⚠️');
+        document.getElementById('item-name').focus();
+        return;
+      }
+
+      const formData = {
+        name,
+        description: document.getElementById('item-description').value.trim(),
+        category:    document.getElementById('item-category').value,
+        priority:    document.getElementById('item-priority').value,
+      };
+
+      if (editingId !== null) {
+        // spread mantiene propiedades originales, sobreescribe con formData
+        items = items.map(i => i.id === editingId ? { ...i, ...formData } : i);
+        showToast('Registro actualizado ✅');
+      } else {
+        // spread para agregar sin mutar el array original
+        items = [...items, createItem(formData)];
+        showToast('Nuevo registro inscrito ⚖️');
+      }
+
+      clearForm();
+      render();
+    };
+
+    // ─── Limpiar formulario ───────────────────────────────────────────────────
+    const clearForm = () => {
+      editingId = null;
+      document.getElementById('item-name').value        = '';
+      document.getElementById('item-description').value = '';
+      document.getElementById('item-category').value    = 'mausoleum';
+      document.getElementById('item-priority').value    = 'medium';
+      document.getElementById('form-title').textContent = '➕ Nueva Inscripción';
+      document.getElementById('btn-submit').textContent = 'Inscribir';
+      document.getElementById('btn-cancel').style.display = 'none';
+    };
+
+    // ─── Editar ───────────────────────────────────────────────────────────────
+    const startEdit = (id) => {
+      const item = items.find(i => i.id === id); // find
+      if (!item) return;
+      editingId = id;
+      document.getElementById('item-name').value        = item.name;
+      document.getElementById('item-description').value = item.description;
+      document.getElementById('item-category').value    = item.category;
+      document.getElementById('item-priority').value    = item.priority;
+      document.getElementById('form-title').textContent = '✏️ Editar Inscripción';
+      document.getElementById('btn-submit').textContent = 'Actualizar';
+      document.getElementById('btn-cancel').style.display = 'inline-block';
+      document.getElementById('item-name').focus();
+    };
+
+    // ─── Eliminar ─────────────────────────────────────────────────────────────
+    const deleteItem = (id) => {
+      items = items.filter(i => i.id !== id); // filter
+      render();
+      showToast('Registro eliminado 🗑️');
+    };
+
+    // ─── Archivar/activar ─────────────────────────────────────────────────────
+    const toggleItem = (id) => {
+      items = items.map(i => i.id === id ? { ...i, active: !i.active } : i); // spread
+      render();
+    };
+
+    // ─── Limpiar archivados ───────────────────────────────────────────────────
+    const clearInactive = () => {
+      const before  = items.length;
+      items         = items.filter(i => i.active); // filter
+      const removed = before - items.length;
+      render();
+      showToast(removed > 0 ? `${removed} archivado(s) eliminado(s) 🧹` : 'No hay archivados');
+    };
+
+    // ─── Rest parameters: log ─────────────────────────────────────────────────
+    const logEvent = (event, ...details) =>
+      console.log(`[Necrópolis | ${event}]`, ...details);
+
+    // ─── Toast ────────────────────────────────────────────────────────────────
+    const showToast = (msg) => {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    };
+
+    // ─── Tema ─────────────────────────────────────────────────────────────────
+    const toggleTheme = () => {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+    };
+
+    // ─── Inicializar ──────────────────────────────────────────────────────────
+    document.getElementById('btn-submit').addEventListener('click', submitItem);
+    document.getElementById('btn-cancel').addEventListener('click', clearForm);
+    document.getElementById('btn-clear').addEventListener('click', clearInactive);
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+    // Enter en el input de nombre también hace submit
+    document.getElementById('item-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitItem();
+    });
+
+    // Filtros en tiempo real
+    ['search-input', 'filter-status', 'filter-category'].forEach(id => {
+      document.getElementById(id).addEventListener('input', render);
+    });
+
+    // Delegación de eventos en la lista
+    document.getElementById('item-list').addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-btn');
+      const delBtn  = e.target.closest('.del-btn');
+      const chk     = e.target.closest('.chk');
+
+      if (editBtn) startEdit(Number(editBtn.dataset.id));
+      else if (delBtn) deleteItem(Number(delBtn.dataset.id));
+      else if (chk) {
+        const itemEl = e.target.closest('[data-id]');
+        if (itemEl) toggleItem(Number(itemEl.dataset.id));
+      }
+    });
+
+    // Render inicial
+    render();
+    logEvent('Sistema iniciado');
+  </script>
+</body>
+</html>
